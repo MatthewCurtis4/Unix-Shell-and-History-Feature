@@ -63,17 +63,32 @@ int main(){
         char *token = strtok(cmd, " ");//split input string into a series of strings split on spaces
         while (token){ //parse into seperate inputs
             //check for the & condition, remove wait clause from parent
-            if (token == '&'){ waiter = 0; }
-            else{ 
-                args[i++] = token; 
-            }
+            args[i++] = token; 
             token = strtok(NULL, " ");
+            // if (strcmp(token, '&') == 0){
+            //      printf("& token detected");
+            //      waiter = 0;
+            //  }
+            //  else{ 
+            //      args[i++] = token; 
+            //      token = strtok(NULL, " ");
+            // }
         }
-        args[i] = NULL; //add null to end to signify end of list for exec
-        
-        printf("top");
-        int j=0;
+        printf("yes", i);
+        if (strcmp(args[i-1], '&') == 0){
+            args[i-1] = NULL;
+        }
+        else{
+            args[i] = NULL; //add null to end to signify end of list for exec
+        }
 
+        int w = 0;
+        while (args[w] != NULL) {
+            printf("args[%d] = %s\n", w, args[w]  );
+            w++;
+        }
+        printf("top");
+        
         pid = fork(); //create child
 
         if (pid < 0){ //if failure
@@ -90,6 +105,7 @@ int main(){
             if (waiter == 1){
                 wait(NULL);
             }
+            wait(NULL);
             //printf("Parent PID Root: %d\n", getpid());
             printf("Task Complete");
         }
