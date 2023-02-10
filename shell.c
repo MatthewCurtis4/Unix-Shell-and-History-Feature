@@ -36,12 +36,14 @@ int main(){
     int should_run = 1; /*flag to determine when to exit program*/
 
     while (should_run){
+        int waiter = 1;
         pid_t pid;
         //string input;
         //read in command line
         printf("osh>");
         fflush(stdout); //clears output buffer
         fgets(cmd, length, stdin);
+
 
         char *endfix = strchr(cmd, '\n');//find new line character and remove it
         if (endfix){
@@ -51,22 +53,26 @@ int main(){
         //check if last entry is \n which it likely will be and replace it
         if (cmd[strlen(cmd)-1] == '\n'){cmd[strlen(cmd)-1] = '\0';}
 
+        //handle exit command
+        if (strcmp(cmd, "exit") == 0) {            
+            should_run = 0;
+            continue;
+        }
+
         int i = 0;
         char *token = strtok(cmd, " ");//split input string into a series of strings split on spaces
         while (token){ //parse into seperate inputs
-            args[i++] = token; 
+            //check for the & condition, remove wait clause from parent
+            if (token == '&'){ waiter = 0; }
+            else{ 
+                args[i++] = token; 
+            }
             token = strtok(NULL, " ");
         }
         args[i] = NULL; //add null to end to signify end of list for exec
-        //printf("i value = %d 1st3rd entry = %s 4th is = %s\n", i, args[2], args[3]);
-        execlp(args[0], args[0], args[1], args[2]);
+        
         printf("top");
         int j=0;
-        while (args[j]){
-            printf("first%s\n",args[j++]);
-        }
-        //exit case
-        if (args == "exit"){ should_run = 0;}
 
         pid = fork(); //create child
 
@@ -75,17 +81,15 @@ int main(){
             //fprintf(stderr, "Fork Failed");
             return 1;
         }
-        else if (pid == 0){ //Child process;
-            //printf("child PID Root: %d\n",getpid());
-            //execvp(*args, NULL) #allows us to load another process
-            //printf("Running Child");
+        if (pid == 0){ //Child process;
+
             execvp(args[0], args);//file name, arugments *name*, null makes end of list of args
             printf("child");
-            //execlp("cat", "cat", "prog.c", NULL); //example
-            //execlp("/bin/ls", "ls", NULL);
         }
         else { //Parent process
-            wait(NULL);
+            if (waiter == 1){
+                wait(NULL);
+            }
             //printf("Parent PID Root: %d\n", getpid());
             printf("Task Complete");
         }
