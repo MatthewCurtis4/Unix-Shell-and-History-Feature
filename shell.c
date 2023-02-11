@@ -65,29 +65,21 @@ int main(){
             //check for the & condition, remove wait clause from parent
             args[i++] = token; 
             token = strtok(NULL, " ");
-            // if (strcmp(token, '&') == 0){
-            //      printf("& token detected");
-            //      waiter = 0;
-            //  }
-            //  else{ 
-            //      args[i++] = token; 
-            //      token = strtok(NULL, " ");
-            // }
         }
-        printf("yes", i);
-        if (strcmp(args[i-1], '&') == 0){
+
+        //detect the & case
+        if (strcmp(args[i-1], "&") == 0){
+            waiter = 0;
             args[i-1] = NULL;
         }
-        else{
-            args[i] = NULL; //add null to end to signify end of list for exec
-        }
+
+        args[i] = NULL; //add null to end to signify end of list for exec
 
         int w = 0;
         while (args[w] != NULL) {
             printf("args[%d] = %s\n", w, args[w]  );
             w++;
         }
-        printf("top");
         
         pid = fork(); //create child
 
@@ -105,7 +97,7 @@ int main(){
             if (waiter == 1){
                 wait(NULL);
             }
-            wait(NULL);
+            //wait(NULL);
             //printf("Parent PID Root: %d\n", getpid());
             printf("Task Complete");
         }
