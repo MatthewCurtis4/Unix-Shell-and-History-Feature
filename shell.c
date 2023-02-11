@@ -29,7 +29,7 @@ Part A:
 #define MAX_LINE 80 /* The maximum length command */
 
 int main(){
-    //char cmd[MAX_LINE];
+
     int length = MAX_LINE/2 + 1;
     char *cmd[length]; /* command line argument*/
     char *args[length];
@@ -38,7 +38,6 @@ int main(){
     while (should_run){
         int waiter = 1;
         pid_t pid;
-        //string input;
         //read in command line
         printf("osh>");
         fflush(stdout); //clears output buffer
@@ -84,30 +83,22 @@ int main(){
         pid = fork(); //create child
 
         if (pid < 0){ //if failure
-            printf("FAILLLLED");
-            //fprintf(stderr, "Fork Failed");
+            printf("Failed PID");
             return 1;
         }
         if (pid == 0){ //Child process;
 
             execvp(args[0], args);//file name, arugments *name*, null makes end of list of args
-            printf("child");
+            printf("child, waiter = %d\n", waiter);
         }
         else { //Parent process
             if (waiter == 1){
                 wait(NULL);
             }
-            //wait(NULL);
-            //printf("Parent PID Root: %d\n", getpid());
-            printf("Task Complete");
-        }
+            printf("parent, waiter = %d\n", waiter);
+            waiter = 1;
 
-    /*
-    After reading input:
-    1. ford a child process using fork()
-    2. child process will invoke execvp()
-    3. parent will invoke wait() unless command included &
-    */
+        }
 
     }
     return 0;
