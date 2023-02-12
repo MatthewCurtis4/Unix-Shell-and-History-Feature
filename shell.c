@@ -1,26 +1,3 @@
-
-
-// create an interafce that accepts user command
-//gives a prompt to which user enters another command
-// fork everytime a new command is entered and run it on the child
-
-
-
-//Components:
-/*
-Components:
-- learn design of shell interface as parent process
-- Reading input
-- writing prompt
-- create new processes for each command with fork() 
-and execute using one of the sytstem calls in the exec() family
-
-Part A:
-1. case where parents waits for child
-2. Case where parent executes in background or concurrently while child process executes.
-
-*/
-
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -28,6 +5,7 @@ Part A:
 
 #define MAX_LINE 80 /* The maximum length command */
 #define HISTORY_MAX 5
+
 int main(){
 
     int length = MAX_LINE/2 + 1;
@@ -41,10 +19,10 @@ int main(){
     while (should_run){
         int waiter = 1;
         pid_t pid;
-        //read in command line
         printf("osh>");
         fflush(stdout); //clears output buffer
-        fgets(cmd, length, stdin);
+        fgets(cmd, length, stdin); //read in command line
+
 
 
         char *endfix = strchr(cmd, '\n');//find new line character and remove it
@@ -60,7 +38,6 @@ int main(){
             should_run = 0;
             continue;
         }
-
 
         if (strcmp(cmd, "history") == 0){
             //store most recent 5
@@ -82,14 +59,10 @@ int main(){
         if (strcmp(cmd, "!!") == 0){
             //ensure there is a previous command to run
             if (cmdcount => 1){
-                printf("!! detected");
                 //replace the command that will be ran by the previous command
                 //vital to do this after strcpy above so !! will still show up in history log properly
                 strcpy(cmd, history[(cmdcount-1) % HISTORY_MAX]);
-                printf(history[(cmdcount) % HISTORY_MAX]);
-                printf(cmd);
             }
-            
         }
 
         cmdcount++; //make sure to increment cmdcount after !! test. Ensure indexing is correct
@@ -109,13 +82,6 @@ int main(){
         }
 
         args[i] = NULL; //add null to end to signify end of list for exec
-
-        //temporary for debugging
-        int w = 0;
-        while (args[w] != NULL) {
-            printf("args[%d] = %s\n", w, args[w]  );
-            w++;
-        }
         
         pid = fork(); //create child
 
@@ -126,15 +92,13 @@ int main(){
         if (pid == 0){ //Child process;
 
             execvp(args[0], args);//file name, arugments *name*, null makes end of list of args
-            printf("child, waiter = %d\n", waiter);
         }
         else { //Parent process
+            //determine if parent process will wait or not.
             if (waiter == 1){
                 wait(NULL);
             }
-            printf("parent, waiter = %d\n", waiter);
             waiter = 1;
-
         }
 
     }
