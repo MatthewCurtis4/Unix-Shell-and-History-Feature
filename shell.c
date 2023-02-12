@@ -27,13 +27,16 @@ Part A:
 #include <string.h>
 
 #define MAX_LINE 80 /* The maximum length command */
-
+#define HISTORY_MAX 5
 int main(){
 
     int length = MAX_LINE/2 + 1;
     char *cmd[length]; /* command line argument*/
     char *args[length];
     int should_run = 1; /*flag to determine when to exit program*/
+    
+    char *history[HISTORY_MAX][MAX_LINE+ 5] = {}; //unspecified length
+    int cmdcount = 0;
 
     while (should_run){
         int waiter = 1;
@@ -49,7 +52,7 @@ int main(){
             *endfix = '\0';
         }
 
-        //check if last entry is \n which it likely will be and replace it
+        //replace last entry if it is new line character
         if (cmd[strlen(cmd)-1] == '\n'){cmd[strlen(cmd)-1] = '\0';}
 
         //handle exit command
@@ -58,10 +61,43 @@ int main(){
             continue;
         }
 
+
+        if (strcmp(cmd, "history") == 0){
+            //store most recent 5
+            //check if more than 5 are stored
+            int start = cmdcount - HISTORY_MAX; //start at 5th most recent item
+            if (cmdcount <= HISTORY_MAX){ //num
+                start = 0; //start at first index if num of cmds is under 5
+            }
+
+            for (int i = 0; i < HISTORY_MAX; i++){
+                //we use % below so it finds the relative position it is compared to the other 5
+                printf("%d %s\n", start + i, history[(start+i) % HISTORY_MAX]);
+            }
+        }
+
+        strcpy(history[cmdcount % HISTORY_MAX], cmd);
+
+        //run the last command if prompt entered is !!
+        if (strcmp(cmd, "!!") == 0){
+            //ensure there is a previous command to run
+            if (cmdcount => 1){
+                printf("!! detected");
+                //replace the command that will be ran by the previous command
+                //vital to do this after strcpy above so !! will still show up in history log properly
+                strcpy(cmd, history[(cmdcount-1) % HISTORY_MAX]);
+                printf(history[(cmdcount) % HISTORY_MAX]);
+                printf(cmd);
+            }
+            
+        }
+
+        cmdcount++; //make sure to increment cmdcount after !! test. Ensure indexing is correct
+
         int i = 0;
-        char *token = strtok(cmd, " ");//split input string into a series of strings split on spaces
-        while (token){ //parse into seperate inputs
-            //check for the & condition, remove wait clause from parent
+        //split input string into a series of strings split on spaces and popular args
+        char *token = strtok(cmd, " ");
+        while (token){
             args[i++] = token; 
             token = strtok(NULL, " ");
         }
@@ -74,6 +110,7 @@ int main(){
 
         args[i] = NULL; //add null to end to signify end of list for exec
 
+        //temporary for debugging
         int w = 0;
         while (args[w] != NULL) {
             printf("args[%d] = %s\n", w, args[w]  );
