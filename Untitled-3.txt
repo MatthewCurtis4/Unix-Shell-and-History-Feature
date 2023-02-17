@@ -1,0 +1,8 @@
+Notes on Shell:
+
+
+
+- program works for parent executing first.
+- but then after you do an & call once then it will always do that andn ever wait it seems
+- need to figure out how to get it back to waiting
+-exit function no longer working
