@@ -1,20 +1,12 @@
 // my approach has it so when history is called, the "table" is printed first
 // and then history is added to the "table"
 
-
-
-
-
-
-
-// when doing *wrong command* & it completely throws off the indexing
-
-
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <sys/wait.h>
 
 #define MAX_LINE 80 /* The maximum length command */
 #define HISTORY_MAX 5
@@ -22,12 +14,12 @@
 int main(){
 
     int length = MAX_LINE/2 + 1;
-    char *cmd[length]; /* command line argument*/
+    char cmd[length]; /* command line argument*/
     char *args[length];
     int should_run = 1; /*flag to determine when to exit program*/
-    
-    char *history[HISTORY_MAX][MAX_LINE+ 5] = {}; //unspecified length
+    char history[HISTORY_MAX][MAX_LINE+ 5] = {}; //unspecified length
     int cmdcount = 0;
+    char input[length];
 
     while (should_run){
         int waiter = 1;
@@ -36,6 +28,20 @@ int main(){
         printf("osh>");
         fflush(stdout); //clears output buffer
         fgets(cmd, length, stdin); //read in command line
+        strcpy(input,cmd);
+
+        //run the last command if prompt entered is !!
+        if (strncmp(cmd, "!!", 2) == 0){
+            //ensure there is a previous command to run
+            if (cmdcount >= 1){
+                //replace the command that will be ran by the previous command
+                //vital to do this after strcpy above so !! will still show up in history log properly
+                strcpy(cmd, history[(cmdcount-1) % HISTORY_MAX]);
+                strcpy(input, history[(cmdcount-1) % HISTORY_MAX]);
+
+            }
+            else {printf("No commands in the history\n");}
+        }
 
         char *endfix = strchr(cmd, '\n');//find new line character and remove it
         if (endfix){
@@ -51,18 +57,8 @@ int main(){
             continue;
         }
 
-        //run the last command if prompt entered is !!
-        if (strcmp(cmd, "!!") == 0){
-            //ensure there is a previous command to run
-            if (cmdcount >= 1){
-                //replace the command that will be ran by the previous command
-                //vital to do this after strcpy above so !! will still show up in history log properly
-                strcpy(cmd, history[(cmdcount-1) % HISTORY_MAX]);
-            }
-            else {printf("No commands in the history\n");}
-        }
 
-        if (strcmp(cmd, "history") == 0){
+        if (strncmp(cmd, "history", 7) == 0){
             //store most recent 5
             //check if more than 5 are stored
             byepass = true;
@@ -80,39 +76,27 @@ int main(){
                 printf("%d %s\n", start + i + 1, history[(start+i) % HISTORY_MAX]);
             }
         }
-    
-        strcpy(history[cmdcount % HISTORY_MAX], cmd);
-        cmdcount++; //make sure to increment cmdcount after !! test. Ensure indexing is correct
-        
-        
         
         int i = 0;
         //split input string into a series of strings split on spaces and popular args
         char *token = strtok(cmd, " ");
 
-        // if (token != NULL) {//if entry is not just new line character/empty
-        //       strcpy(history[cmdcount % HISTORY_MAX], cmd);
-        //       cmdcount++; //make sure to increment cmdcount after !! test. Ensure indexing is correct
-        // }
-        // else{ byepass = true;}
+        if (token != NULL) {//if entry is not just new line character/empty
+            strcpy(history[cmdcount % HISTORY_MAX], input);
+            cmdcount++; //make sure to increment cmdcount after !! test. Ensure indexing is correct
+        }
+        else{ byepass = true;}
 
         while (token){
             args[i++] = token; 
             token = strtok(NULL, " ");
         }
-
-        //char* starttoken = strtok(args, " \t\n");
-
+        
         //detect the & case
-        if (strcmp(args[i-1], "&") == 0){
+        if (strncmp(args[i-1], "&", 1) == 0){
             waiter = 0;
             args[i-1] = NULL;
         }
-
-
-        //ADD IN CASE IF THERE IS A STR IN ARGUMENTS THAT IS AN & STILL
-        // IF SO BYEPASS AND PRINT WRONG
-
 
         args[i] = NULL; //add null to end to signify end of list for exec
         
@@ -123,14 +107,13 @@ int main(){
             return 1;
         }
         if (pid == 0){ //Child process;
-            //execvp(args[0], args);//file name, arugments *name*, null makes end of list of args
-            execvp(args[0], args);
-            // if (byepass == false){
-            //     int status = execvp(args[0], args);//file name, arugments *name*, null makes end of list of args
-            //     if (status == -1){
-            //          printf("error: invalid command - try again\n");
-            //     }
-            // }
+            if (byepass == false){
+                int status = execvp(args[0], args);
+                if (status == -1){
+                     printf("error: invalid command - try again\n");
+                }
+            }
+            kill(getpid(), SIGTERM);
         }
         else { //Parent process
 
